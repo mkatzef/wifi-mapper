@@ -1,0 +1,11 @@
+WifiCredentials.h
+*.rc
+*.db
+*.opendb
+*.suo
+WiFiMapper/x64/*
+WiFiMapper/debug/*
+*.pcd
+*.txt
+*.doc
+*.tmp
