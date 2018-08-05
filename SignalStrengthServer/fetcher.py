@@ -1,4 +1,4 @@
-""" Fetches the RSSI values measured by the pair of Wi-Fi modules
+""" Fetches the RSSI values measured by the Wi-Fi modules
     on the Wi-Fi scanner, and calculates sampling statistics.
 	Written by Marc Katzef
 """
@@ -7,7 +7,7 @@ import urllib.request
 import time
 
 # ESP8266 IP addresses on the shared network
-urls = ["http://192.168.43.251/rssi", "http://192.168.43.87/rssi"]
+urls = ["http://192.168.1.77/rssi", "http://192.168.1.76/rssi", "http://192.168.1.71/rssi", "http://192.168.1.72/rssi", "http://192.168.1.74/rssi"]
 
 # Experiment duration
 test_duration_s = 5
@@ -20,23 +20,20 @@ total = 0
 diff = 0
 print("Starting...")
 while time.time() < end_time:
-    s1 = int(urllib.request.urlopen(urls[0]).read())
-    s2 = int(urllib.request.urlopen(urls[1]).read())
-    total += s1 + s2
-    diff += abs(s1 - s2)
-    count += 2
+    for url in urls:
+        rssi = int(urllib.request.urlopen(url).read())
+        total += rssi
+        count += 1
 
 print("Received", count, "samples")
 print("Average sample rate: {:.3f} Hz".format(count / test_duration_s))
 print("Average signal strength: {:.3f} dB".format(total / count))
-print("Average signal diff: {:.3f} dB".format(diff / count))
 
 # Enter infinite loop showing difference between RSSI readings
 maxdiff = 0
 while True:
-    s1 = int(urllib.request.urlopen(urls[0]).read())
-    s2 = int(urllib.request.urlopen(urls[1]).read())
-    diff = abs(s2 - s1)
-    maxdiff = max(maxdiff, diff)
-    print("{}, {}, diff: {}, maxdiff: {}".format(s1, s2, diff, maxdiff), end='\r')
+    for url in urls:
+        rssi = int(urllib.request.urlopen(urls[0]).read())
+        print(rssi, end='\t')
+    print(" ", end='\r')
     

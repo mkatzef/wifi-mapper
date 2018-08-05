@@ -28,15 +28,25 @@ class WiFiMapper {
 	static const int displayWidth = 640;
 	static const int displayHeight = 480;
 
-	// Wi-Fi module addresses
-	const std::string cWiFiIp1 = "192.168.1.72";
-	const std::string cWiFiIp2 = "192.168.1.70";
-
 	// Scanner properties
 	static const uint m_markerRadius_mm = 34;
-	const float cScannerLength_mm = 500;
-	const float cLengthA1 = 180;
-	const float cLengthA2 = 320;
+	const float cScannerLength_mm = 490;
+
+	enum class WifiStartPosition{markerA, markerB};
+	struct WiFiModuleDescription {
+		std::string ipAddress;
+		int offset_mm;
+		WifiStartPosition baseMarker;
+	};
+
+	// Wi-Fi module addresses and positions on scanner
+	const std::vector<WiFiModuleDescription> cWiFiModules{
+		{ "192.168.1.77", 110, WifiStartPosition::markerA },
+		{ "192.168.1.76", 185, WifiStartPosition::markerA },
+		{ "192.168.1.71", 255, WifiStartPosition::markerA },
+		{ "192.168.1.72", 165, WifiStartPosition::markerB },
+		{ "192.168.1.74", 100, WifiStartPosition::markerB }
+	};
 	
 	// Initialisation parameters and variables
 	static const uint m_initDistance_mm = 750;
@@ -73,8 +83,8 @@ public:
 
 private:
 	PointCloud m_wifiPointCloud;
-	WiFiReceiver m_receiver1;
-	WiFiReceiver m_receiver2;
+	std::vector<WiFiReceiver> m_receivers;
+	Rendezvous m_receiverSync;
 	double m_ticks = 0;
 
 	// Current Kinect

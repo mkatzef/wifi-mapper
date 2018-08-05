@@ -1,6 +1,16 @@
 # WiFi Mapper
 A program for a PC to track the position of, and collect information from a Wi-Fi scanning device. Requires a Microsoft Kinect Sensor v2 and ESP8266 microcontrollers.
 
+## Components
+<table>
+<td>
+<img src="../Images/depth_view.png" height="200" title="Tracking underway">
+</td>
+<td>
+<img src="../Images/scanner.jpg" height="200" title="3D Wi-Fi scanner">
+</td>
+</table>
+
 ## Files
 The notable files contained in this project are: 
 * `MarkerTracker.h` - the (header-only) module responsible for tracking a single sphere in a series of depth images (the file containing the implemented tracking algorithm).

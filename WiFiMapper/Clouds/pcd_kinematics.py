@@ -1,8 +1,16 @@
+""" Calculates the distanced travelled by the Wi-Fi scanner
+    based on the generated pcd file.
+	Written by Marc Katzef
+"""
+
 import sys
 import os
+import numpy as np
 
 HEADER_LINE_COUNT = 10
 MAX_DELTA_MM = 150
+MODULE_COUNT = 5
+
 
 def get_distance(p1, p2):
     sqr_sum = (p1[0] - p2[0]) ** 2  \
@@ -12,53 +20,46 @@ def get_distance(p1, p2):
     return sqr_sum ** (1 / 2)
 
 
-def main(input, rate):
+def main(input, module_count, rate):
     with open(input, 'r') as infile:
         for i in range(HEADER_LINE_COUNT):
             infile.readline()
         
-        distance_a = 0
-        count = 0
-        distance_b = 0
+        prev_positions = []
+        distances = np.zeros(module_count)
+        counts = np.zeros(module_count)
         
-        tokens_a = infile.readline().strip().split()
-        p1_a = [float(i) for i in tokens_a[:3]]
-        tokens_b = infile.readline().strip().split()
-        p1_b = [float(i) for i in tokens_b[:3]]
+        for i in range(module_count):
+            tokens = infile.readline().strip().split()
+            position_i = [float(j) for j in tokens[:3]]
+            prev_positions.append(position_i)
+            
+        index = 0
+        while len(tokens) == 4:
+            position_i = [float(i) for i in tokens[:3]]
+            
+            d_i = get_distance(position_i, prev_positions[index])
+            prev_positions[index] = position_i
+            
+            if d_i < MAX_DELTA_MM:
+                distances[index] += d_i
+                counts[index] += 1
+            
+            tokens = infile.readline().strip().split()
+            index += 1
+            if index >= module_count:
+                index = 0
+            
+    
+    for i in range(module_count):
+        duration_i = counts[i] / rate
+        distance_i_m = distances[i] / 1000
+        avg_speed_i_m_s = distance_i_m / duration_i
         
-        tokens_a = infile.readline().strip().split()
-        tokens_b = infile.readline().strip().split()
-        while len(tokens_b) == 4:
-            p2_a = [float(i) for i in tokens_a[:3]]
-            p2_b = [float(i) for i in tokens_b[:3]]
-            
-            da = get_distance(p1_a, p2_a)
-            db = get_distance(p1_b, p2_b)
-            
-            if da < MAX_DELTA_MM and db < MAX_DELTA_MM:
-                distance_a += da
-                distance_b += db
-                p1_a = p2_a
-                p1_b = p2_b
-                
-                count += 1
-            
-            tokens_a = infile.readline().strip().split()
-            if len(tokens_a) != 4:
-                break    
-            tokens_b = infile.readline().strip().split()
-    
-    duration = count / rate
-    distance_a_m = distance_a / 1000
-    avg_speed_a_m_s = distance_a_m / duration
-    distance_b_m = distance_b / 1000
-    avg_speed_b_m_s = distance_b_m / duration
-    
-    print("Time:\t", duration, "s")
-    print("Total distance A:\t", distance_a_m, "m")
-    print("Average speed A:\t", avg_speed_a_m_s, "m/s")
-    print("Total distance B:\t", distance_b_m, "m")
-    print("Average speed B:\t", avg_speed_b_m_s, "m/s")
+        print("Module:", i + 1)
+        print("Movement time:\t", duration_i, "s")
+        print("Total distance:\t", distance_i_m, "m")
+        print("Average speed:\t", avg_speed_i_m_s, "m/s")
 
     
 if __name__ == "__main__":
@@ -66,18 +67,20 @@ if __name__ == "__main__":
     if argv[0].startswith("py"):
         argv.pop(0)
     
-    if len(argv) != 3:
-        print("usage:", argv[0], "input_file", "sample_rate")
+    if len(argv) != 4:
+        print("usage:", argv[0], "input_file", "module_count", "sample_rate")
     else:
-        f1, rate = argv[1:]
+        f1, module_count, rate = argv[1:]
         if not os.path.exists(f1):
             print("file not found:", f1)
         else:
             valid_rate = False
             try:
                 rate = float(rate)
+                module_count = int(module_count)
                 valid_rate = True
             except:                
-                print("out file already exists:", f2)
+                print("invalid module count and/or rate (should be: integer and float)")
         if valid_rate:
-            main(f1, rate)
+            main(f1, module_count, rate)
+            

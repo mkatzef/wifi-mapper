@@ -1,6 +1,16 @@
 # 3D Wi-Fi Scanner
 A system to collect Wi-Fi signal strength in 3D using an Xbox Kinect Sensor v2 and ESP8266 microcontrollers. Originally hosted on [eng-git](https://eng-git.canterbury.ac.nz/mka122/cosc428-2018).
 
+## Output
+<table>
+<td>
+<img src="Images/lounge_map_tree.jpg" width="256" title="Absolute signal strength 3D Wi-Fi map">
+</td>
+<td>
+<img src="Images/lounge_map_snake.jpg" width="256" title="Relative signal strength 3D Wi-Fi map">
+</td>
+</table>
+
 ## System Structure
 ### Projects
 The data-collection system consists of the following two projects:

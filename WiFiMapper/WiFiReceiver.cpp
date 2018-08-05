@@ -6,6 +6,7 @@
 
 #include "WiFiReceiver.h"
 
+#include <iostream>
 #include <string>
 #include <winhttp.h>
 
@@ -131,20 +132,36 @@ DWORD WINAPI workerFunction(LPVOID lpParam) {
 	WorkerData *arg = (WorkerData*)lpParam;
 	string ipAddress = arg->ipAddress;
 	HANDLE *mutexHandle = arg->mutexHandle;
-	int *rssiVar = arg->rssiVar;
+	int *rssi = arg->rssi;
+	Rendezvous *rendezvous = arg->rendezvous;
 
 	while (1) {
-		int rssi = fetchRssiFromServer(ipAddress);
+		int newRssi = fetchRssiFromServer(ipAddress);
+		
 		WaitForSingleObject(*mutexHandle, INFINITE);
-
-		*rssiVar = rssi;
-
+		*rssi = newRssi;
 		ReleaseMutex(*mutexHandle);
+
+		if (rendezvous) {
+			rendezvous->arrive();
+		}
 	}
 }
 
 
-WiFiReceiver::WiFiReceiver(std::string ipAdress) : m_ipAddress(ipAdress), m_rssi(0) {
+void WiFiReceiver::setIpAddress(std::string ipAddress) {
+	m_ipAddress = ipAddress;
+}
+
+
+void WiFiReceiver::addRenzezvous(Rendezvous *rendezvous) {
+	m_rendezvous = rendezvous;
+}
+
+
+void WiFiReceiver::start() {
+	m_rssi = 0;
+
 	m_rssiMutex = CreateMutex(
 		NULL,				// default security attributes
 		FALSE,				// initially not owned
@@ -152,7 +169,8 @@ WiFiReceiver::WiFiReceiver(std::string ipAdress) : m_ipAddress(ipAdress), m_rssi
 
 	workerArgs.ipAddress = m_ipAddress;
 	workerArgs.mutexHandle = &m_rssiMutex;
-	workerArgs.rssiVar = &m_rssi;
+	workerArgs.rssi = &m_rssi;
+	workerArgs.rendezvous = m_rendezvous;
 
 	m_threadHandle = CreateThread(
 		NULL,                   // default security attributes

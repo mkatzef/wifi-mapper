@@ -30,6 +30,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PointCloud.h" />
+    <ClInclude Include="Rendezvous.h" />
     <ClInclude Include="WiFiMapper.h" />
     <ClInclude Include="WiFiReceiver.h" />
     <ClInclude Include="MarkerTracker.h" />

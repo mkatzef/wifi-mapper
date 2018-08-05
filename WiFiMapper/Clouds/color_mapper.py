@@ -1,8 +1,14 @@
+""" Maps RSSI values (encoded as the red channel in a pcd file) to
+    a colour indicating the signal strength (green being the best,
+    red being the worst).
+	Written by Marc Katzef
+"""
+
 import sys
 import os
 
-RSSI_MIN = 50  # best
-RSSI_MAX = 70  # worst
+RSSI_MIN = 30  # best
+RSSI_MAX = 90  # worst
 
 HEADER_LINE_COUNT = 10
 RSSI_RANGE = RSSI_MAX - RSSI_MIN

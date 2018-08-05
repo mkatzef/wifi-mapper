@@ -13,7 +13,6 @@
 #include "WiFiMapper.h"
 #include "PointCloud.h"
 
-
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -26,7 +25,7 @@ using namespace cv;
 using namespace std;
 
 std::string cloudDir = "./Clouds/";
-bool writeEnvCloud = false;
+bool writeEnvCloud = true;
 
 int main(void) {
 	WiFiMapper application;
@@ -57,13 +56,21 @@ WiFiMapper::WiFiMapper() :
 	m_pKinectSensor(NULL),
 	m_pMultiSourceReader(NULL),
 	m_pColorRGBX(NULL),
-	m_receiver1(cWiFiIp1),
-	m_receiver2(cWiFiIp2) {
+	m_receivers(cWiFiModules.size()),
+	m_receiverSync(cWiFiModules.size()) {
+
+	for (size_t i = 0; i < cWiFiModules.size(); ++i) {
+		m_receivers[i].setIpAddress(cWiFiModules[i].ipAddress);
+		m_receivers[i].addRenzezvous(&m_receiverSync);
+		m_receivers[i].start();
+	}
+
 	// create heap storage for color pixel data in RGBX format
 	m_pColorRGBX = new RGBQUAD[cColorWidth * cColorHeight];
 	m_pDepth = new UINT16[cDepthWidth * cDepthHeight];
 	m_displayBuffer = new UINT8[cDepthWidth * cDepthHeight * 3];
 
+	// Initialise marker trackers
 	m_trackerA.init(cDepthWidth, cDepthHeight, cDepthVFov, m_initOriginA, m_initDistance_mm, m_markerRadius_mm, m_markerRadiusTolerance, m_centerTolerance_px);
 	m_trackerB.init(cDepthWidth, cDepthHeight, cDepthVFov, m_initOriginB, m_initDistance_mm, m_markerRadius_mm, m_markerRadiusTolerance, m_centerTolerance_px);
 
@@ -99,8 +106,11 @@ WiFiMapper::~WiFiMapper() {
 
 	SafeRelease(m_pKinectSensor);
 
-	m_receiver1.disconnect();
-	m_receiver2.disconnect();
+	for (size_t i = 0; i < cWiFiModules.size(); ++i) {
+		m_receivers[i].disconnect();
+	}
+
+	m_receiverSync.destroy();
 }
 
 
@@ -124,7 +134,11 @@ PointCloud WiFiMapper::Run() {
 				m_sampleCount = 0;
 				m_sampleCollectionCount++;
 				std::cout << "Beginning collection " << m_sampleCollectionCount << "\n";
-				std::cout << "Sample number,a_x,a_y,a_z,b_x,b_y,b_z,rssi1,rssi2\n";
+				std::cout << "Sample number,a_x,a_y,a_z,b_x,b_y,b_z";
+				for (size_t i = 0; i < cWiFiModules.size(); ++i) {
+					std::cout << ",rssi" << i + 1;
+				}
+				std::cout << "\n";
 			}
 		}
 
@@ -466,18 +480,37 @@ void WiFiMapper::ProcessChannels(UINT16 *pBufferDepth, int nDepthWidth, int nDep
 void WiFiMapper::recordPoints(Point3f posA, Point3f posB) {
 	Point3f diff = posB - posA;
 	Point3f dirAB = diff / distanceBetween(posA, posB);
-	Point3f pos1 = posA + dirAB * cLengthA1;
-	Point3f pos2 = posA + dirAB * cLengthA2;
-
-	int rssi1 = m_receiver1.getRssi();
-	int rssi2 = m_receiver2.getRssi();
-
-	m_wifiPointCloud.AddPoint(pos1, -rssi1, 0, 0);
-	m_wifiPointCloud.AddPoint(pos2, -rssi2, 0, 0);
 
 	if (m_writeStats) {
 		m_sampleCount++;
-		std::cout << m_sampleCount << "," << posA.x << "," << posA.y << "," << posA.z << "," << posB.x << "," << posB.y << "," << posB.z << "," << rssi1 << "," << rssi2 << "\n";
+		std::cout << m_sampleCount << "," << posA.x << "," << posA.y << "," << posA.z << "," << posB.x << "," << posB.y << "," << posB.z;
+	}
+
+	for (size_t i = 0; i < cWiFiModules.size(); ++i) {
+		Point3f baseMarkerPosition;
+		Point3f directionVector;
+
+		if (cWiFiModules[i].baseMarker == WifiStartPosition::markerA) {
+			baseMarkerPosition = posA;
+			directionVector = dirAB;
+		} else {
+			baseMarkerPosition = posB;
+			directionVector = -dirAB;
+		}
+
+		Point3f position = baseMarkerPosition + directionVector * cWiFiModules[i].offset_mm;
+
+		int rssi = m_receivers[i].getRssi();
+
+		m_wifiPointCloud.AddPoint(position, -rssi, 0, 0);
+
+		if (m_writeStats) {
+			 std::cout << "," << rssi;
+		}
+	}
+
+	if (m_writeStats) {
+		std::cout << "\n";
 	}
 }
 

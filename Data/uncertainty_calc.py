@@ -7,13 +7,14 @@ import numpy as np
 dab = 490
 dab_u = 10
 dab_pu = dab_u / dab
-da1 = 180
-da1_u = 10
-da2 = 340
-da2_u = 10
+
+das = np.array([110, 185, 255, 325, 390])
+das_u = 5
+dbs = dab - das
+dbs_u = 5
 
 # Scanner orientation
-dir = np.array([0.0001, 0.0001, 100])
+dir = np.array([0.0001, 0.0001, 10000.0001])
 dir = dir / np.linalg.norm(dir)
 print("Scanner rotation:", dir)
 diff = dab * dir
@@ -31,12 +32,16 @@ denom_u = (1/2) * (sqrsum_u / sqrsum) * denom
 uab = num / denom
 uab_u = ((num_u / num) + (denom_u / denom)) * uab
 
-dva1 = uab * da1
-dva1_u = (uab_u / uab + da1_u / da1) * dva1
-p1_u = pa_u + dva1_u
-print("Module 1's position uncertainty", p1_u)
-
-dva2 = uab * da2
-dva2_u = (uab_u / uab + da2_u / da2) * dva2
-p2_u = pa_u + dva2_u
-print("Module 2's position uncertainty", p2_u)
+for i in range(len(das)):
+    dai = das[i]
+    dbi = dbs[i]
+    
+    dvai = uab * dai
+    dvai_u = (uab_u / uab + das_u / dai) * dvai
+    pi_a_u = pa_u + dvai_u
+    print("Uncertainty for p{} using dai:".format(i + 1), pi_a_u)
+    
+    dvbi = uab * dbi
+    dvbi_u = (uab_u / uab + dbs_u / dbi) * dvbi
+    pi_b_u = pb_u + dvbi_u
+    print("Uncertainty for p{} using dbi:".format(i + 1), pi_b_u)

@@ -1,5 +1,13 @@
 # Signal Strength Server
 A program for an ESP8266 microcontroller to act as a Wi-Fi signal strength scanner, with a simple web interface.
+
+## Screenshots
+<table>
+<td>
+<img src="../Images/epic_webpage.png" width="256" title="ESP8266 signal strength server interface">
+</td>
+</table>
+
 ## Files
 This project consists of the following files: 
 * `SignalStrengthServer.ino` - the Arduino sketch for the ESP8266 microcontrollers.
