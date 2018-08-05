@@ -4,7 +4,7 @@ A program for an ESP8266 microcontroller to act as a Wi-Fi signal strength scann
 ## Screenshots
 <table>
 <td>
-<img src="../Images/epic_webpage.png" width="256" title="ESP8266 signal strength server interface">
+<img src="../Images/esp8266_webpage.png" width="256" title="ESP8266 signal strength server interface">
 </td>
 </table>
 
